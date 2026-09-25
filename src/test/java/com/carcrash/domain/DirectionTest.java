@@ -57,9 +57,4 @@ class DirectionTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid direction");
     }
-
-    @Test
-    void rejectsNullSymbol() {
-        assertThatThrownBy(() -> Direction.fromSymbol(null)).isInstanceOf(IllegalArgumentException.class);
-    }
 }

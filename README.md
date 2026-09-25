@@ -41,7 +41,7 @@ You do not need to install Maven yourself.
 ```
 
 `start.sh` builds the application quietly with the Maven Wrapper (tests are
-skipped so it starts quickly) and then launches the interactive CLI. Build output
+neither compiled nor run, so it starts quickly) and then launches the interactive CLI. Build output
 goes to stderr, so the program's own output on stdout stays clean. For example,
 you can pipe a scripted session in:
 
@@ -55,7 +55,7 @@ and writes nothing to disk, so no cars or fields carry over between runs.
 To run the built jar directly:
 
 ```bash
-./mvnw -q -DskipTests package
+./mvnw -q -Dmaven.test.skip=true package
 java -jar target/driving-simulation.jar
 ```
 
@@ -65,7 +65,7 @@ java -jar target/driving-simulation.jar
 ./mvnw test
 ```
 
-The suite has 144 tests (unit tests plus end-to-end CLI tests) and runs in a
+The suite has 140 tests (unit tests plus end-to-end CLI tests) and runs in a
 few seconds.
 
 | Test class | Covers |
@@ -74,8 +74,8 @@ few seconds.
 | `CommandTest` | parsing `L`/`R`/`F`, case and whitespace handling, empty and invalid input |
 | `PositionTest` | movement, immutability, `(x,y)` formatting |
 | `FieldTest` | boundary checks (`0..W-1`, `0..H-1`), rejecting non-positive sizes |
-| `CarTest` | executing commands, ignoring moves off the field, state transitions |
-| `SimulationTest` | registration rules: unique names, free and in-bounds start cells |
+| `SimulationTest` | registration rules: non-blank unique names, free and in-bounds start cells, full field |
+| `CarTest` | per-run car state: executing commands, ignoring moves off the field, planned moves, finishing, crashing |
 | `SimulationEngineTest` | spec scenarios 1 and 2, parked cars, head-on swaps, 3+ car pile-ups, hitting stopped or crashed cars, following, re-running |
 | `InputParserTest` | every kind of user input, valid and invalid |
 | `OutputFormatterTest` | exact output line formats |
@@ -207,17 +207,16 @@ com.carcrash
 │   ├── Position              immutable record (x, y): moved(Direction)
 │   ├── Field                 immutable record (width, height): contains(Position)
 │   ├── CarSpec               immutable record: name, start, direction, commands
-│   ├── Car                   mutable per-run state: position, direction, status, collision
 │   └── Simulation            aggregate: field + registered cars; enforces registration rules
 ├── simulation
 │   ├── SimulationEngine      stateless step-by-step runner with collision detection
+│   ├── Car                   package-private mutable per-run state of one car
 │   ├── SimulationResult      ordered list of outcomes
 │   └── CarOutcome            sealed: Finished(name, position, direction) | Collided(name, others, position, step)
 └── cli
     ├── ConsoleApp            dialogue flow; BufferedReader + PrintStream are injected
-    ├── InputParser           text → domain values, with user-friendly errors
-    ├── OutputFormatter       domain values → output lines
-    └── InvalidInputException
+    ├── InputParser           text → domain values (shape of the input only)
+    └── OutputFormatter       domain values → output lines
 ```
 
 ### Key design choices
@@ -229,17 +228,26 @@ com.carcrash
   `SimulationResult` are records, and their lists are copied defensively.
 - **Registered cars and running cars are different types.**
   - `CarSpec` is what the user registered and never changes.
-  - `Car` holds the mutable state of one run. The engine creates fresh `Car`s from
-    the specs each time, so running a simulation never changes the registered
-    cars (a test checks this).
+  - `Car` holds the mutable state of one run. It is package-private to the
+    engine, which creates fresh `Car`s from the specs each time, so running a
+    simulation never changes the registered cars (a test checks this).
+- **Each rule lives in one place.** The domain types enforce their own
+  invariants: `Field` requires a positive size, `Direction` and `Command` reject
+  unknown symbols, and `Simulation` checks names and start cells. `InputParser`
+  only checks the shape of the text, such as the number of tokens and whether
+  they are whole numbers.
+- **Swaps are planned before any car moves.** In each step the engine first works
+  out where every car would end up, cancels the moves of cars that would swap
+  cells, and only then carries out the remaining commands. No move ever has to be
+  undone.
 - **`Direction` owns the rotation and movement rules.** Directions are declared
   clockwise, so turning is index arithmetic. The movement deltas live in the enum,
   which keeps `Position.moved()` a one-liner with no `switch`.
 - **A sealed `CarOutcome` with pattern matching** makes the two result shapes
   explicit. The formatter's `switch` is checked for exhaustiveness by the compiler.
 - **Errors are handled in one place.**
-  - Domain validation and parsing throw `IllegalArgumentException` (or its subclass
-    `InvalidInputException`) with a message meant for the user.
+  - Domain validation and parsing throw `IllegalArgumentException` with a
+    message meant for the user.
   - `ConsoleApp.ask()` is the only place that catches them. It prints `Error: …`
     and asks again, so the user never sees a stack trace.
   - End of input is turned into a private control-flow exception that ends the

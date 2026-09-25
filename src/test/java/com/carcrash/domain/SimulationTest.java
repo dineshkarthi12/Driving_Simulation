@@ -2,8 +2,6 @@ package com.carcrash.domain;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -12,7 +10,7 @@ class SimulationTest {
     private final Simulation simulation = new Simulation(new Field(10, 10));
 
     private static CarSpec spec(String name, int x, int y) {
-        return new CarSpec(name, new Position(x, y), Direction.N, List.of(Command.F));
+        return TestCars.car(name, x, y, "N", "F");
     }
 
     @Test
@@ -29,6 +27,13 @@ class SimulationTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already exists");
         assertThat(simulation.cars()).hasSize(1);
+    }
+
+    @Test
+    void rejectsBlankName() {
+        assertThatThrownBy(() -> simulation.validateName("   "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Car name must not be empty.");
     }
 
     @Test

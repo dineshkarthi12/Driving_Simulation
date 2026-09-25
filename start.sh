@@ -8,6 +8,6 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # Build quietly, skipping tests for a fast start. Build output goes to stderr
 # so that stdout carries only the application's own output.
-./mvnw -q -B -DskipTests package 1>&2
+./mvnw -q -B -Dmaven.test.skip=true package 1>&2
 
 exec java -jar target/driving-simulation.jar

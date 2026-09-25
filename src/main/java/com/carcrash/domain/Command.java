@@ -1,7 +1,7 @@
 package com.carcrash.domain;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /** A single instruction that can be issued to a car. */
 public enum Command {
@@ -35,22 +35,14 @@ public enum Command {
      * @throws IllegalArgumentException if any non-whitespace character is not a valid command
      */
     public static List<Command> parseAll(String text) {
-        List<Command> commands = new ArrayList<>();
-        if (text == null) {
-            return commands;
-        }
-        for (char c : text.toCharArray()) {
-            if (!Character.isWhitespace(c)) {
-                commands.add(fromChar(c));
-            }
-        }
-        return List.copyOf(commands);
+        return text.chars()
+                .filter(c -> !Character.isWhitespace(c))
+                .mapToObj(c -> fromChar((char) c))
+                .toList();
     }
 
     /** Renders a command list back to its compact textual form, e.g. {@code "FFR"}. */
     public static String toText(List<Command> commands) {
-        StringBuilder sb = new StringBuilder(commands.size());
-        commands.forEach(command -> sb.append(command.name()));
-        return sb.toString();
+        return commands.stream().map(Command::name).collect(Collectors.joining());
     }
 }

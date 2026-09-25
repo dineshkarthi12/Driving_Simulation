@@ -38,11 +38,6 @@ class CommandTest {
     }
 
     @Test
-    void nullMeansNoCommands() {
-        assertThat(Command.parseAll(null)).isEmpty();
-    }
-
-    @Test
     void rejectsInvalidCharacterAndNamesIt() {
         assertThatThrownBy(() -> Command.parseAll("FFXR"))
                 .isInstanceOf(IllegalArgumentException.class)

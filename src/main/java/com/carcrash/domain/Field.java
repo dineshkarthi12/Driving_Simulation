@@ -9,8 +9,7 @@ public record Field(int width, int height) {
 
     public Field {
         if (width <= 0 || height <= 0) {
-            throw new IllegalArgumentException(
-                    "Width and height must be positive integers, but got " + width + " x " + height + ".");
+            throw new IllegalArgumentException("Width and height must be positive whole numbers.");
         }
     }
 

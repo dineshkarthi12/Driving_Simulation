@@ -1,6 +1,7 @@
 package com.carcrash.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,9 +23,9 @@ public final class Simulation {
         return field;
     }
 
-    /** Registered cars in the order they were added. */
+    /** Read-only view of the registered cars in the order they were added. */
     public List<CarSpec> cars() {
-        return List.copyOf(cars);
+        return Collections.unmodifiableList(cars);
     }
 
     public boolean hasCars() {
@@ -42,7 +43,7 @@ public final class Simulation {
      * @throws IllegalArgumentException if the name is blank or already used
      */
     public void validateName(String name) {
-        if (name == null || name.isBlank()) {
+        if (name.isBlank()) {
             throw new IllegalArgumentException("Car name must not be empty.");
         }
         if (cars.stream().anyMatch(car -> car.name().equals(name))) {
@@ -60,13 +61,12 @@ public final class Simulation {
             throw new IllegalArgumentException("Position " + position + " is outside the field. Valid x is 0.."
                     + (field.width() - 1) + " and valid y is 0.." + (field.height() - 1) + ".");
         }
-        cars.stream()
-                .filter(car -> car.start().equals(position))
-                .findFirst()
-                .ifPresent(car -> {
-                    throw new IllegalArgumentException(
-                            "Position " + position + " is already occupied by car " + car.name() + ".");
-                });
+        for (CarSpec car : cars) {
+            if (car.start().equals(position)) {
+                throw new IllegalArgumentException(
+                        "Position " + position + " is already occupied by car " + car.name() + ".");
+            }
+        }
     }
 
     /**

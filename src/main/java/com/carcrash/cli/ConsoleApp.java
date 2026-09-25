@@ -3,7 +3,6 @@ package com.carcrash.cli;
 import com.carcrash.domain.CarSpec;
 import com.carcrash.domain.Command;
 import com.carcrash.domain.Field;
-import com.carcrash.domain.Position;
 import com.carcrash.domain.Simulation;
 import com.carcrash.simulation.SimulationEngine;
 import com.carcrash.simulation.SimulationResult;
@@ -52,8 +51,7 @@ public final class ConsoleApp {
                 buildAndRun(simulation);
             } while (askStartOver());
         } catch (EndOfInputException e) {
-            // The user closed the input stream (e.g. Ctrl+D): end the prompt's line and say goodbye.
-            out.println();
+            // The user closed the input stream (e.g. Ctrl+D): fall through to the farewell.
         }
         out.println("Thank you for running the simulation. Goodbye!");
     }
@@ -91,7 +89,7 @@ public final class ConsoleApp {
 
     private void addCar(Simulation simulation) {
         String name = ask("Please enter the name of the car:", input -> {
-            String parsed = InputParser.parseName(input);
+            String parsed = input.strip();
             simulation.validateName(parsed);
             return parsed;
         });
@@ -104,8 +102,7 @@ public final class ConsoleApp {
         List<Command> commands = ask("Please enter the commands for car " + name + ":",
                 InputParser::parseCommands);
 
-        Position start = placement.position();
-        simulation.addCar(new CarSpec(name, start, placement.direction(), commands));
+        simulation.addCar(new CarSpec(name, placement.position(), placement.direction(), commands));
     }
 
     private boolean askStartOver() {
@@ -135,7 +132,7 @@ public final class ConsoleApp {
 
     /**
      * Prints the prompt and reads a line, repeating until {@code parser} accepts
-     * the input. Parsers signal invalid input with {@link IllegalArgumentException},
+     * the input. End of input ends the session. Parsers signal invalid input with {@link IllegalArgumentException},
      * whose message is shown to the user.
      */
     private <T> T ask(String prompt, Function<String, T> parser) {
@@ -143,6 +140,9 @@ public final class ConsoleApp {
             out.println(prompt);
             String line = readLine();
             out.println();
+            if (line == null) {
+                throw new EndOfInputException();
+            }
             try {
                 return parser.apply(line);
             } catch (IllegalArgumentException e) {
@@ -156,13 +156,10 @@ public final class ConsoleApp {
         out.println();
     }
 
+    /** Reads the next line, or {@code null} at end of input. */
     private String readLine() {
         try {
-            String line = in.readLine();
-            if (line == null) {
-                throw new EndOfInputException();
-            }
-            return line;
+            return in.readLine();
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read input", e);
         }

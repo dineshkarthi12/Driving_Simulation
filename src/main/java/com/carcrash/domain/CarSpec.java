@@ -16,7 +16,7 @@ public record CarSpec(String name, Position start, Direction direction, List<Com
         Objects.requireNonNull(direction, "direction");
         Objects.requireNonNull(commands, "commands");
         if (name.isBlank()) {
-            throw new IllegalArgumentException("Car name must not be blank.");
+            throw new IllegalArgumentException("Car name must not be empty.");
         }
         commands = List.copyOf(commands);
     }

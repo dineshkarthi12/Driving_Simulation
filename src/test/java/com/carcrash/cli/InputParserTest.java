@@ -27,7 +27,7 @@ class InputParserTest {
     @ValueSource(strings = {"", "10", "10 10 10", "a b", "10 x", "0 10", "10 0", "-1 5", "1.5 2",
             "99999999999 1"})
     void rejectsInvalidFieldSize(String input) {
-        assertThatThrownBy(() -> InputParser.parseField(input)).isInstanceOf(InvalidInputException.class);
+        assertThatThrownBy(() -> InputParser.parseField(input)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -40,7 +40,7 @@ class InputParserTest {
     @ParameterizedTest
     @ValueSource(strings = {"", "1 2", "1 2 N X", "a 2 N", "1 b N", "1 2 Q", "1 2 12"})
     void rejectsInvalidPlacement(String input) {
-        assertThatThrownBy(() -> InputParser.parsePlacement(input)).isInstanceOf(InvalidInputException.class);
+        assertThatThrownBy(() -> InputParser.parsePlacement(input)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -57,19 +57,8 @@ class InputParserTest {
     @Test
     void rejectsInvalidCommands() {
         assertThatThrownBy(() -> InputParser.parseCommands("FFB"))
-                .isInstanceOf(InvalidInputException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("'B'");
-    }
-
-    @Test
-    void trimsCarName() {
-        assertThat(InputParser.parseName("  Herbie  ")).isEqualTo("Herbie");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"", "   "})
-    void rejectsBlankCarName(String input) {
-        assertThatThrownBy(() -> InputParser.parseName(input)).isInstanceOf(InvalidInputException.class);
     }
 
     @Test
@@ -81,7 +70,7 @@ class InputParserTest {
     @ValueSource(strings = {"", "0", "3", "-1", "one", "1 2"})
     void rejectsInvalidMenuChoice(String input) {
         assertThatThrownBy(() -> InputParser.parseMenuChoice(input, 2))
-                .isInstanceOf(InvalidInputException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("from 1 to 2");
     }
 }

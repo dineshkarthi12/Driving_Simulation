@@ -49,15 +49,10 @@ public enum Direction {
      * @throws IllegalArgumentException if the symbol is not a known direction
      */
     public static Direction fromSymbol(String symbol) {
-        if (symbol != null) {
-            String normalized = symbol.strip().toUpperCase(Locale.ROOT);
-            for (Direction direction : CLOCKWISE) {
-                if (direction.name().equals(normalized)) {
-                    return direction;
-                }
-            }
+        try {
+            return valueOf(symbol.strip().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid direction '" + symbol + "'. Use one of N, E, S, W.", e);
         }
-        throw new IllegalArgumentException(
-                "Invalid direction '" + symbol + "'. Use one of N, E, S, W.");
     }
 }

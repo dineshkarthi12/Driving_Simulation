@@ -1,6 +1,5 @@
 package com.carcrash.simulation;
 
-import com.carcrash.domain.Car;
 import com.carcrash.domain.Command;
 import com.carcrash.domain.Field;
 import com.carcrash.domain.Position;
@@ -8,10 +7,11 @@ import com.carcrash.domain.Simulation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -19,10 +19,10 @@ import java.util.TreeSet;
  * every active car executes its Nth command, and collisions are evaluated once
  * all cars have acted.
  *
- * <p>Collision rules applied after each step:
+ * <p>Collision rules applied in each step:
  * <ol>
- *   <li><b>Head-on swap</b>: two cars that exchanged cells would have passed
- *       through each other. Both moves are cancelled, the cars stay on their
+ *   <li><b>Head-on swap</b>: two cars that would exchange cells would pass
+ *       through each other. Neither move happens, the cars stay on their
  *       pre-move cells, and each collides with the other at its own cell.</li>
  *   <li><b>Shared cell</b>: two or more cars on the same cell collide. Every car
  *       there that has not already collided stops, including finished or parked
@@ -45,48 +45,53 @@ public final class SimulationEngine {
             step++;
             executeStep(field, cars, step);
         }
-        return new SimulationResult(cars.stream().map(SimulationEngine::toOutcome).toList());
+        return new SimulationResult(cars.stream().map(Car::outcome).toList());
     }
 
     private static void executeStep(Field field, List<Car> cars, int step) {
-        Map<Car, Position> movedFrom = new LinkedHashMap<>();
+        Map<Car, Command> commands = new LinkedHashMap<>();
         for (Car car : cars) {
-            if (!car.isActive()) {
-                continue;
-            }
-            Optional<Command> command = car.commandAt(step);
-            if (command.isEmpty()) {
-                car.finish();
-                continue;
-            }
-            Position before = car.position();
-            car.execute(command.get(), field);
-            if (!car.position().equals(before)) {
-                movedFrom.put(car, before);
+            if (car.isActive()) {
+                car.commandAt(step).ifPresentOrElse(command -> commands.put(car, command), car::finish);
             }
         }
 
         Map<Car, TreeSet<String>> hits = new LinkedHashMap<>();
-        detectSwaps(movedFrom, hits);
+        Set<Car> swapped = detectSwaps(field, commands, hits);
+        commands.forEach((car, command) -> {
+            if (!swapped.contains(car)) {
+                car.execute(command, field);
+            }
+        });
         detectSharedCells(cars, hits);
 
         hits.forEach((car, others) -> car.crash(List.copyOf(others), step));
     }
 
-    /** Detects pairs of cars that swapped cells and cancels both moves. */
-    private static void detectSwaps(Map<Car, Position> movedFrom, Map<Car, TreeSet<String>> hits) {
-        Map<Position, Car> carLeaving = new HashMap<>();
-        movedFrom.forEach((car, from) -> carLeaving.put(from, car));
+    /**
+     * Finds pairs of cars that would exchange cells, records the collision and
+     * returns those cars so that their moves are not carried out.
+     */
+    private static Set<Car> detectSwaps(Field field, Map<Car, Command> commands, Map<Car, TreeSet<String>> hits) {
+        Map<Car, Position> targets = new HashMap<>();
+        Map<Position, Car> movingFrom = new HashMap<>();
+        commands.forEach((car, command) -> {
+            Position target = car.plannedPosition(command, field);
+            if (!target.equals(car.position())) {
+                targets.put(car, target);
+                movingFrom.put(car.position(), car);
+            }
+        });
 
-        List<Car> swapped = new ArrayList<>();
-        movedFrom.forEach((car, from) -> {
-            Car other = carLeaving.get(car.position());
-            if (other != null && other != car && from.equals(other.position())) {
+        Set<Car> swapped = new HashSet<>();
+        targets.forEach((car, target) -> {
+            Car other = movingFrom.get(target);
+            if (other != null && car.position().equals(targets.get(other))) {
                 recordHit(hits, car, other.name());
                 swapped.add(car);
             }
         });
-        swapped.forEach(car -> car.revertTo(movedFrom.get(car)));
+        return swapped;
     }
 
     /** Detects cells occupied by more than one car after the step's moves. */
@@ -111,11 +116,5 @@ public final class SimulationEngine {
 
     private static void recordHit(Map<Car, TreeSet<String>> hits, Car car, String otherName) {
         hits.computeIfAbsent(car, c -> new TreeSet<>()).add(otherName);
-    }
-
-    private static CarOutcome toOutcome(Car car) {
-        return car.collision()
-                .<CarOutcome>map(c -> new CarOutcome.Collided(car.name(), c.otherCars(), c.position(), c.step()))
-                .orElseGet(() -> new CarOutcome.Finished(car.name(), car.position(), car.direction()));
     }
 }
