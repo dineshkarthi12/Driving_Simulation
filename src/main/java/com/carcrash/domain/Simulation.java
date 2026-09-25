@@ -31,6 +31,11 @@ public final class Simulation {
         return !cars.isEmpty();
     }
 
+    /** Whether every cell of the field is taken, so no further car can be placed. */
+    public boolean isFull() {
+        return cars.size() >= (long) field.width() * field.height();
+    }
+
     /**
      * Validates a proposed car name.
      *

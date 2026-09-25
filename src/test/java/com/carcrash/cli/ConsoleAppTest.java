@@ -554,4 +554,62 @@ class ConsoleAppTest {
                 Thank you for running the simulation. Goodbye!
                 """);
     }
+
+    @Test
+    void addingCarToFullFieldShowsMessageAndReturnsToMenu() {
+        assertSession("""
+                Welcome to Car Crash Java!
+
+                Please enter the width and height of the simulation field in x y format:
+                > 1 1
+
+                You have created a field of 1 x 1.
+
+                Please choose from the following options:
+                [1] Add a car to field
+                [2] Run simulation
+
+                > 1
+
+                Please enter the name of the car:
+                > A
+
+                Please enter initial position of car A in x y Direction format:
+                > 0 0 N
+
+                Please enter the commands for car A:
+                > RF
+
+                Your current list of cars are:
+                - A, (0,0) N, RF
+
+                Please choose from the following options:
+                [1] Add a car to field
+                [2] Run simulation
+
+                > 1
+
+                Error: The field is full; every cell is already occupied. Please run the simulation.
+
+                Please choose from the following options:
+                [1] Add a car to field
+                [2] Run simulation
+
+                > 2
+
+                Your current list of cars are:
+                - A, (0,0) N, RF
+
+                After simulation, the result is:
+                - A, (0,0) E
+
+                Please choose from the following options:
+                [1] Start over
+                [2] Exit
+
+                > 2
+
+                Thank you for running the simulation. Goodbye!
+                """);
+    }
 }

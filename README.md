@@ -65,7 +65,7 @@ java -jar target/driving-simulation.jar
 ./mvnw test
 ```
 
-The suite has 141 tests (unit tests plus end-to-end CLI tests) and runs in a
+The suite has 144 tests (unit tests plus end-to-end CLI tests) and runs in a
 few seconds.
 
 | Test class | Covers |
@@ -79,7 +79,7 @@ few seconds.
 | `SimulationEngineTest` | spec scenarios 1 and 2, parked cars, head-on swaps, 3+ car pile-ups, hitting stopped or crashed cars, following, re-running |
 | `InputParserTest` | every kind of user input, valid and invalid |
 | `OutputFormatterTest` | exact output line formats |
-| `ConsoleAppTest` | full sessions: scenarios 1 and 2 verbatim, error re-prompts, zero cars, parked car, start over, EOF |
+| `ConsoleAppTest` | full sessions: scenarios 1 and 2 verbatim, error re-prompts, zero cars, full field, parked car, start over, EOF |
 
 `ConsoleAppTest` writes each session as a transcript in the same format as the
 specification. Lines starting with `> ` are user input and every other line is
@@ -343,6 +343,10 @@ Two cars cannot start on the same cell, since they would already have collided
 before step 1. Positions outside `0..W-1 × 0..H-1` are rejected with a message
 that states the valid range. Only the position prompt is repeated; the name you
 already entered is kept.
+
+If every cell of the field is already taken, choosing *Add a car* shows
+`Error: The field is full; …` and returns to the menu straight away, instead of
+asking for a name and then rejecting every possible position.
 
 ### 8. Input formatting: **forgiving**
 

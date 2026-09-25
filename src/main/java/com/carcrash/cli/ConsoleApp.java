@@ -71,6 +71,10 @@ public final class ConsoleApp {
         while (true) {
             int choice = askMenu("Add a car to field", "Run simulation");
             if (choice == ADD_CAR) {
+                if (simulation.isFull()) {
+                    printError("The field is full; every cell is already occupied. Please run the simulation.");
+                    continue;
+                }
                 addCar(simulation);
                 printCars(simulation);
             } else if (choice == RUN_SIMULATION) {

@@ -60,4 +60,19 @@ class SimulationTest {
         simulation.addCar(spec("A", 1, 1));
         assertThatThrownBy(() -> simulation.cars().clear()).isInstanceOf(UnsupportedOperationException.class);
     }
+
+    @Test
+    void isFullOnceEveryCellIsTaken() {
+        Simulation tiny = new Simulation(new Field(2, 1));
+        assertThat(tiny.isFull()).isFalse();
+        tiny.addCar(spec("A", 0, 0));
+        assertThat(tiny.isFull()).isFalse();
+        tiny.addCar(spec("B", 1, 0));
+        assertThat(tiny.isFull()).isTrue();
+    }
+
+    @Test
+    void isFullDoesNotOverflowOnHugeFields() {
+        assertThat(new Simulation(new Field(Integer.MAX_VALUE, Integer.MAX_VALUE)).isFull()).isFalse();
+    }
 }
