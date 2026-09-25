@@ -52,7 +52,8 @@ public final class ConsoleApp {
                 buildAndRun(simulation);
             } while (askStartOver());
         } catch (EndOfInputException e) {
-            // The user closed the input stream: fall through to the farewell.
+            // The user closed the input stream (e.g. Ctrl+D): end the prompt's line and say goodbye.
+            out.println();
         }
         out.println("Thank you for running the simulation. Goodbye!");
     }
