@@ -1,0 +1,30 @@
+# Build output
+target/
+
+# Maven wrapper binaries (this project uses the script-only wrapper)
+.mvn/wrapper/*.jar
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+nbproject/
+out/
+bin/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and archives
+*.log
+*.zip
+*.jar
+*.class
